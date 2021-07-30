@@ -6,25 +6,40 @@ kkk = 1; %saliency mapping
 t = readtable('/home/stagakis/Desktop/multi_agent_realistic_potholes/ego0/steering_true.txt', 'ReadVariableNames', false);
 A = table2array(t);
 
-propath = '/home/stagakis/Desktop/multi_agent_realistic_potholes/ego0/sensor.lidar.ray_cast/';
-ply_files = dir(strcat(propath,'*.ply'));
+%propath = '/home/stagakis/Desktop/multi_agent_realistic_potholes/ego0/sensor.lidar.ray_cast/';
+%pcl_files = dir(strcat(propath,'*.ply'));
 
-for k = 1:size(ply_files)
+propath = '/home/stagakis//Desktop/stereo_pothole_datasets/dataset1/ptcloud/';
+pcl_files = dir(strcat(propath,'*.mat'));
+
+for k = 1:size(pcl_files)
 %for k = 100:200
 
-    clearvars -except k ply_files t A kkk propath
+    clearvars -except k pcl_files t A kkk propath
     %%% we read the geometry of the scene
-    file = ply_files(k).name    
+    file = pcl_files(k).name    
     frame = file(1:size(file,2)-4);
+    extension = file(size(file,2)-3:end);
     
     fullpath = strcat(propath,file);
     full_file_name = strcat(propath,frame);
     
-    oo = plyread(fullpath);
-
-    vertices(:,1) = oo.vertex.x;
-    vertices(:,2) = oo.vertex.y;
-    vertices(:,3) = oo.vertex.z;
+    if extension == ".ply"
+        oo = plyread(fullpath);
+        vertices(:,1) = oo.vertex.x;
+        vertices(:,2) = oo.vertex.y;
+        vertices(:,3) = oo.vertex.z;
+    else %.mat
+        oo = load(fullpath);
+        ptCloud = pointCloud(oo.xyzPoints);
+        
+        gridStep = 10;
+        ptCloud = pcdownsample(ptCloud,'gridAverage',gridStep);
+        
+        vertices(:,1) = ptCloud.Location(:,1);
+        vertices(:,2) = ptCloud.Location(:,2);
+        vertices(:,3) = ptCloud.Location(:,3);
+    end
 
     tic
     %%%%%%%%%%%%% We estimate the neighbors %%%%%%%%%%%%%%%%%%%%%%%
@@ -34,7 +49,7 @@ for k = 1:size(ply_files)
     apoints = double(apoints);
     akdtreeobj = KDTreeSearcher(apoints,'distance','euclidean');
     aAdjOfPoints = knnsearch(akdtreeobj,apoints,'k',(numofsalientneig+1));
-    AdjOfPointsa3 = knnsearch(akdtreeobj,apoints,'k',(numofsalientneig+1)); 
+    AdjOfPointsa3 = knnsearch(akdtreeobj,apoints,'k',(numofsalientneig+1));
     aAdjOfPoints = aAdjOfPoints(:,2:end);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -73,14 +88,14 @@ for k = 1:size(ply_files)
     cmp = colormap(jet);
     sizecmp2 = size(cmp,1);
     step11 = range11/64; %sizecmp2;
-
-     for i = 1:featuresize
-         k = 1;
-         while((norm_heatmap(i,1) > k*step11) && k < 64) %% we use only 16 from a 64 colormap  
-             k = k + 1;
-         end
-         color11(i,:) = cmp((k-1) + 1,:);
-         a11(i,1) =  k; %labeling
+    toc
+    for i = 1:featuresize
+        k = 1;
+        while((norm_heatmap(i,1) > k*step11) && k < 64) %% we use only 16 from a 64 colormap  
+            k = k + 1;
+        end
+        color11(i,:) = cmp((k-1) + 1,:);
+        a11(i,1) =  k; %labeling
      end
 
     saliency_colors = colorizepointcloud(vertices, a11);
