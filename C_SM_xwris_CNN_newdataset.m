@@ -34,8 +34,9 @@ for k = 1:size(pcl_files)
     end
 
     
-    gridStep = 10;
-    ptCloud = pcdownsample(ptCloud,'gridAverage',gridStep);
+    %gridStep = 5;
+    %ptCloud = pcdownsample(ptCloud,'gridAverage',gridStep);
+    
     vertices(:,1) = ptCloud.Location(:,1);
     vertices(:,2) = ptCloud.Location(:,2);
     vertices(:,3) = ptCloud.Location(:,3);
