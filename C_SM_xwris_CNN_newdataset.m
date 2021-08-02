@@ -3,14 +3,14 @@ clc;clear all;
 
 kkk = 1; %saliency mapping
 
-t = readtable('/home/stagakis/Desktop/multi_agent_realistic_potholes/ego0/steering_true.txt', 'ReadVariableNames', false);
-A = table2array(t);
+%t = readtable('/home/stagakis/Desktop/multi_agent_realistic_potholes/ego0/steering_true.txt', 'ReadVariableNames', false);
+%A = table2array(t);
 
 %propath = '/home/stagakis/Desktop/multi_agent_realistic_potholes/ego0/sensor.lidar.ray_cast/';
 %pcl_files = dir(strcat(propath,'*.ply'));
 
-propath = '/home/stagakis//Desktop/stereo_pothole_datasets/dataset1/ptcloud/';
-pcl_files = dir(strcat(propath,'*.mat'));
+propath = '/home/stagakis/Desktop/road_with_pothole_generation/completed_potholes/';
+pcl_files = dir(strcat(propath,'colored_*.ply'));
 
 for k = 1:size(pcl_files)
 %for k = 100:200
@@ -26,21 +26,20 @@ for k = 1:size(pcl_files)
     
     if extension == ".ply"
         oo = plyread(fullpath);
-        vertices(:,1) = oo.vertex.x;
-        vertices(:,2) = oo.vertex.y;
-        vertices(:,3) = oo.vertex.z;
+        ptCloud = pointCloud([oo.vertex.x, oo.vertex.y, oo.vertex.z]);
     else %.mat
         oo = load(fullpath);
         ptCloud = pointCloud(oo.xyzPoints);
-        
-        gridStep = 10;
-        ptCloud = pcdownsample(ptCloud,'gridAverage',gridStep);
-        
-        vertices(:,1) = ptCloud.Location(:,1);
-        vertices(:,2) = ptCloud.Location(:,2);
-        vertices(:,3) = ptCloud.Location(:,3);
+
     end
 
+    
+    gridStep = 10;
+    ptCloud = pcdownsample(ptCloud,'gridAverage',gridStep);
+    vertices(:,1) = ptCloud.Location(:,1);
+    vertices(:,2) = ptCloud.Location(:,2);
+    vertices(:,3) = ptCloud.Location(:,3);
+    
     tic
     %%%%%%%%%%%%% We estimate the neighbors %%%%%%%%%%%%%%%%%%%%%%%
     apoints = [ vertices(:,1), vertices(:,2), vertices(:,3)]; 
